@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.Manifest
 import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import android.widget.Toast
 import android.widget.Toast.LENGTH_LONG
@@ -67,13 +68,8 @@ class InstalledAppsPlugin() : MethodCallHandler, FlutterPlugin, ActivityAware {
         }
         when (call.method) {
             "getInstalledApps" -> {
-                val includeSystemApps = call.argument("exclude_system_apps") ?: true
-                val withIcon = call.argument("with_icon") ?: false
-                val packageNamePrefix: String = call.argument("package_name_prefix") ?: ""
                 Thread {
-                    val apps: List<Map<String, Any?>> =
-                        getInstalledApps(includeSystemApps, withIcon, packageNamePrefix)
-                    result.success(apps)
+                    result.success(getInstalledApps())
                 }.start()
             }
             "startApp" -> {
@@ -101,23 +97,12 @@ class InstalledAppsPlugin() : MethodCallHandler, FlutterPlugin, ActivityAware {
         }
     }
 
-    private fun getInstalledApps(
-        excludeSystemApps: Boolean,
-        withIcon: Boolean,
-        packageNamePrefix: String
-    ): List<Map<String, Any?>> {
+    private fun getInstalledApps(): List<Map<String, Any?>> {
         val packageManager = getPackageManager(context!!)
-        var installedApps = packageManager.getInstalledApplications(0)
-        if (excludeSystemApps)
-            installedApps =
-                installedApps.filter { app -> !isSystemApp(packageManager, app.packageName) }
-        if (packageNamePrefix.isNotEmpty())
-            installedApps = installedApps.filter { app ->
-                app.packageName.startsWith(
-                    packageNamePrefix.lowercase(ENGLISH)
-                )
-            }
-        return installedApps.map { app -> convertAppToMap(packageManager, app, withIcon) }
+        var installedApps = packageManager.getInstalledPackages(PackageManager.GET_PERMISSIONS).filter {
+            app -> app.requestedPermissions?.contains(Manifest.permission.INTERNET) == true
+        }
+        return installedApps.map { app -> convertAppToMap(packageManager, app.applicationInfo) }
     }
 
     private fun startApp(packageName: String?): Boolean {
@@ -154,10 +139,8 @@ class InstalledAppsPlugin() : MethodCallHandler, FlutterPlugin, ActivityAware {
         packageManager: PackageManager,
         packageName: String
     ): Map<String, Any?>? {
-        var installedApps = packageManager.getInstalledApplications(0)
-        installedApps = installedApps.filter { app -> app.packageName == packageName }
-        return if (installedApps.isEmpty()) null
-        else convertAppToMap(packageManager, installedApps[0], true)
+        var app = packageManager.getApplicationInfo(packageName, 0)
+        return convertAppToMap(packageManager, app)
     }
 
 }

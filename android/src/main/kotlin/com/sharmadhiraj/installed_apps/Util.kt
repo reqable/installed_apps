@@ -20,31 +20,28 @@ class Util {
         fun convertAppToMap(
             packageManager: PackageManager,
             app: ApplicationInfo,
-            withIcon: Boolean
         ): HashMap<String, Any?> {
             val map = HashMap<String, Any?>()
             map["name"] = packageManager.getApplicationLabel(app)
             map["package_name"] = app.packageName
-            map["icon"] =
-                if (withIcon) drawableToByteArray(app.loadIcon(packageManager)) else ByteArray(0)
-            val packageInfo = packageManager.getPackageInfo(app.packageName, 0)
-            map["version_name"] = packageInfo.versionName
-            map["version_code"] = getVersionCode(packageInfo)
+            map["icon"] = drawableToByteArray(app.loadIcon(packageManager))
             return map
         }
 
         private fun drawableToByteArray(drawable: Drawable): ByteArray {
             val bitmap = drawableToBitmap(drawable)
             val stream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            bitmap.compress(Bitmap.CompressFormat.PNG, 80, stream)
             return stream.toByteArray()
         }
 
         private fun drawableToBitmap(drawable: Drawable): Bitmap {
-            if (SDK_INT <= N_MR1) return (drawable as BitmapDrawable).bitmap
+            if (drawable is BitmapDrawable) {
+                return drawable.bitmap
+            }
             val bitmap = Bitmap.createBitmap(
-                drawable.intrinsicWidth,
-                drawable.intrinsicHeight,
+                128.coerceAtMost(drawable.intrinsicWidth),
+                128.coerceAtMost(drawable.intrinsicHeight),
                 Bitmap.Config.ARGB_8888
             )
             val canvas = Canvas(bitmap)
