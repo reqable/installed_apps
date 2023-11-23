@@ -93,6 +93,10 @@ class InstalledAppsPlugin() : MethodCallHandler, FlutterPlugin, ActivityAware {
                 val packageName: String = call.argument("package_name") ?: ""
                 result.success(isSystemApp(getPackageManager(context!!), packageName))
             }
+            "isInstalled" -> {
+                val packageName: String = call.argument("package_name") ?: ""
+                result.success(isInstalled(getPackageManager(context!!), packageName))
+            }
             else -> result.notImplemented()
         }
     }
@@ -126,6 +130,15 @@ class InstalledAppsPlugin() : MethodCallHandler, FlutterPlugin, ActivityAware {
         return packageManager.getLaunchIntentForPackage(packageName) == null
     }
 
+    private fun isInstalled(packageManager: PackageManager, packageName: String): Boolean {
+        try {
+            var app = packageManager.getApplicationInfo(packageName, 0)
+            return true
+        } catch (e: PackageManager.NameNotFoundException) {
+            return false
+        }
+    }
+
     private fun openSettings(packageName: String?) {
         val intent = Intent()
         intent.flags = FLAG_ACTIVITY_NEW_TASK
@@ -139,8 +152,12 @@ class InstalledAppsPlugin() : MethodCallHandler, FlutterPlugin, ActivityAware {
         packageManager: PackageManager,
         packageName: String
     ): Map<String, Any?>? {
-        var app = packageManager.getApplicationInfo(packageName, 0)
-        return convertAppToMap(packageManager, app)
+        try {
+            var app = packageManager.getApplicationInfo(packageName, 0)
+            return convertAppToMap(packageManager, app)
+        } catch (e: PackageManager.NameNotFoundException) {
+            return null
+        }
     }
 
 }

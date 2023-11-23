@@ -48,13 +48,13 @@ class InstalledApps {
     );
   }
 
-  static Future<AppInfo> getAppInfo(String packageName) async {
+  static Future<AppInfo?> getAppInfo(String packageName) async {
     var app = await _channel.invokeMethod(
       "getAppInfo",
       {"package_name": packageName},
     );
     if (app == null) {
-      throw ("App not found with provided package name $packageName");
+      return null;
     } else {
       return AppInfo.create(app);
     }
@@ -63,6 +63,13 @@ class InstalledApps {
   static Future<bool?> isSystemApp(String packageName) async {
     return _channel.invokeMethod(
       "isSystemApp",
+      {"package_name": packageName},
+    );
+  }
+
+  static Future<bool?> isInstalled(String packageName) async {
+    return _channel.invokeMethod(
+      "isInstalled",
       {"package_name": packageName},
     );
   }
