@@ -1,17 +1,19 @@
 package com.sharmadhiraj.installed_apps
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.N_MR1
 import android.os.Build.VERSION_CODES.P
 import java.io.ByteArrayOutputStream
+
 
 class Util {
 
@@ -23,6 +25,17 @@ class Util {
         ): HashMap<String, Any?> {
             val map = HashMap<String, Any?>()
             map["name"] = packageManager.getApplicationLabel(app)
+            if (map["name"] == app.packageName) {
+                packageManager.getLaunchIntentForPackage(app.packageName)?.let {
+                    val activityList: List<ResolveInfo> = packageManager.queryIntentActivities(it, 0)
+                    if (activityList.isNotEmpty()) {
+                        val activityName = activityList[0].activityInfo.loadLabel(packageManager)
+                        if (activityName.isNotEmpty()) {
+                            map["name"] = activityName
+                        }
+                    }
+                }
+            }
             map["package_name"] = app.packageName
             map["icon"] = drawableToByteArray(app.loadIcon(packageManager))
             return map
