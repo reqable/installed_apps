@@ -11,6 +11,7 @@ import android.widget.Toast
 import android.widget.Toast.LENGTH_LONG
 import android.widget.Toast.LENGTH_SHORT
 import com.sharmadhiraj.installed_apps.Util.Companion.convertAppToMap
+import com.sharmadhiraj.installed_apps.Util.Companion.drawableToByteArray
 import com.sharmadhiraj.installed_apps.Util.Companion.getPackageManager
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -80,14 +81,13 @@ class InstalledAppsPlugin() : MethodCallHandler, FlutterPlugin, ActivityAware {
                 val packageName: String? = call.argument("package_name")
                 openSettings(packageName)
             }
-            "toast" -> {
-                val message = call.argument("message") ?: ""
-                val short = call.argument("short_length") ?: true
-                toast(message, short)
-            }
             "getAppInfo" -> {
                 val packageName: String = call.argument("package_name") ?: ""
                 result.success(getAppInfo(getPackageManager(context!!), packageName))
+            }
+            "getAppIcon" -> {
+                val packageName: String = call.argument("package_name") ?: ""
+                result.success(getAppIcon(getPackageManager(context!!), packageName))
             }
             "isSystemApp" -> {
                 val packageName: String = call.argument("package_name") ?: ""
@@ -121,11 +121,6 @@ class InstalledAppsPlugin() : MethodCallHandler, FlutterPlugin, ActivityAware {
         }
     }
 
-    private fun toast(text: String, short: Boolean) {
-        Toast.makeText(context!!, text, if (short) LENGTH_SHORT else LENGTH_LONG)
-            .show()
-    }
-
     private fun isSystemApp(packageManager: PackageManager, packageName: String): Boolean {
         return packageManager.getLaunchIntentForPackage(packageName) == null
     }
@@ -155,6 +150,20 @@ class InstalledAppsPlugin() : MethodCallHandler, FlutterPlugin, ActivityAware {
         try {
             var app = packageManager.getApplicationInfo(packageName, 0)
             return convertAppToMap(packageManager, app)
+        } catch (e: PackageManager.NameNotFoundException) {
+            return null
+        }
+    }
+
+    private fun getAppIcon(
+        packageManager: PackageManager,
+        packageName: String
+    ): Map<String, Any?>? {
+        try {
+            val map = HashMap<String, Any?>()
+            var app = packageManager.getApplicationInfo(packageName, 0)
+            map["icon"] = drawableToByteArray(app.loadIcon(packageManager))
+            return map
         } catch (e: PackageManager.NameNotFoundException) {
             return null
         }

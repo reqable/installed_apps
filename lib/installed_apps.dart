@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:installed_apps/app_info.dart';
@@ -19,9 +20,7 @@ class InstalledApps {
         "package_name_prefix": packageNamePrefix,
       },
     );
-    List<AppInfo> appInfoList = apps.map((app) => AppInfo.create(app)).toList();
-    appInfoList.sort((a, b) => a.name!.compareTo(b.name!));
-    return appInfoList;
+    return apps.map((app) => AppInfo.create(app)).toList();
   }
 
   static Future<bool?> startApp(String packageName) async {
@@ -31,20 +30,10 @@ class InstalledApps {
     );
   }
 
-  static openSettings(String packageName) {
+  static void openSettings(String packageName) {
     _channel.invokeMethod(
       "openSettings",
       {"package_name": packageName},
-    );
-  }
-
-  static toast(String message, bool isShortLength) {
-    _channel.invokeMethod(
-      "toast",
-      {
-        "message": message,
-        "short_length": isShortLength,
-      },
     );
   }
 
@@ -58,6 +47,14 @@ class InstalledApps {
     } else {
       return AppInfo.create(app);
     }
+  }
+
+  static Future<Uint8List?> getAppIcon(String packageName) async {
+    var app = await _channel.invokeMethod(
+      "getAppIcon",
+      {"package_name": packageName},
+    );
+    return app['icon'];
   }
 
   static Future<bool?> isSystemApp(String packageName) async {

@@ -37,11 +37,13 @@ class Util {
                 }
             }
             map["package_name"] = app.packageName
-            map["icon"] = drawableToByteArray(app.loadIcon(packageManager))
+            map["system"] = (app.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+            val packageInfo = packageManager.getPackageInfo(app.packageName, 0)
+            map["update_time"] = packageInfo.lastUpdateTime
             return map
         }
 
-        private fun drawableToByteArray(drawable: Drawable): ByteArray {
+        fun drawableToByteArray(drawable: Drawable): ByteArray {
             val bitmap = drawableToBitmap(drawable)
             val stream = ByteArrayOutputStream()
             bitmap.compress(Bitmap.CompressFormat.PNG, 80, stream)
