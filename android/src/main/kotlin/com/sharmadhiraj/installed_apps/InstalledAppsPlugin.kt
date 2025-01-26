@@ -106,7 +106,15 @@ class InstalledAppsPlugin() : MethodCallHandler, FlutterPlugin, ActivityAware {
         var installedApps = packageManager.getInstalledPackages(PackageManager.GET_PERMISSIONS).filter {
             app -> app.requestedPermissions?.contains(Manifest.permission.INTERNET) == true
         }
-        return installedApps.map { app -> convertAppToMap(packageManager, app.applicationInfo) }
+        val results = ArrayList<Map<String, Any?>>()
+        for (app in installedApps) {
+            try {
+                results.add(convertAppToMap(packageManager, app.applicationInfo))
+            } catch (e: PackageManager.NameNotFoundException) {
+                continue
+            }
+        }
+        return results
     }
 
     private fun startApp(packageName: String?): Boolean {
